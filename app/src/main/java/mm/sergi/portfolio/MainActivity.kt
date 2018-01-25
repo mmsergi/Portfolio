@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.os.Build
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import android.support.v7.widget.*
 import android.util.Log
 import android.view.Menu
@@ -18,14 +19,11 @@ import org.json.JSONException
 import java.io.IOException
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import org.json.JSONObject
 import java.util.ArrayList
 
 
 class MainActivity : AppCompatActivity(), CoinsAdapter.CoinsAdapterListener {
-
-    override fun onContactSelected(coin: Coin?) {
-        Toast.makeText(applicationContext, "Selected: " + coin!!.getName(), Toast.LENGTH_LONG).show()
-    }
 
     private var recyclerView: RecyclerView? = null
     private var coinList: MutableList<Coin>? = null
@@ -54,16 +52,23 @@ class MainActivity : AppCompatActivity(), CoinsAdapter.CoinsAdapterListener {
         recyclerView!!.setLayoutManager(mLayoutManager)
         recyclerView!!.setItemAnimator(DefaultItemAnimator())
         recyclerView!!.addItemDecoration(MyDividerItemDecoration(this, DividerItemDecoration.VERTICAL, 36))
+        recyclerView!!.setHasFixedSize(true);
+        recyclerView!!.setItemViewCacheSize(20);
+        recyclerView!!.setDrawingCacheEnabled(true);
+        recyclerView!!.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
         recyclerView!!.setAdapter(mAdapter)
 
-        fetchCoins()
+        Handler().postDelayed({
+            fetchCoins()
+        }, 5000)
     }
 
-     fun fetchCoins() {
+
+
+    fun fetchCoins() {
          val client = OkHttpClient()
          val request: Request
-
-         request = Request.Builder().url("https://api.coinmarketcap.com/v1/ticker/?convert=EUR&limit=0").get().build()
+         request = Request.Builder().url("https://api.coinmarketcap.com/v1/ticker/?convert=EUR&limit=100").get().build()
 
          client.newCall(request).enqueue(object : Callback {
              override fun onFailure(call: Call, e: IOException) {
@@ -75,30 +80,22 @@ class MainActivity : AppCompatActivity(), CoinsAdapter.CoinsAdapterListener {
                  if (!response.isSuccessful()) {
                      throw IOException("Unexpected code " + response)
                  } else {
-                     val response = response.body()!!.string()
+                     val r = response.body()!!.string()
                      try {
-                         val json = JSONArray(response)
-
-                         for (e in 0 until json.length()) {
-
-                             val coinString:String = json.get(e).toString()
-                             val gson = Gson()
-                             val coin : Coin = gson.fromJson(coinString, Coin::class.java)
-                             //coinList!!.add(coin)
-
-                             Log.e(Integer.toString(e), coin.name)
-
-                         }
+                         val json = JSONArray(r)
 
                          val items = Gson().fromJson<List<Coin>>(json.toString(), object : TypeToken<List<Coin>>() {}.type)
 
-                         // adding contacts to contacts list
                          coinList!!.clear()
                          coinList!!.addAll(items)
 
+                         val db = DatabaseManager(applicationContext)
+                         db.deleteCoinsTable()
+                         for (e in 0 until coinList!!.size) {
+                             db.insertCoin(coinList!!.get(e))
+                         }
+
                          runOnUiThread {
-                             //stuff that updates ui
-                             // refreshing recycler view
                              mAdapter!!.notifyDataSetChanged()
                          }
 
@@ -109,6 +106,8 @@ class MainActivity : AppCompatActivity(), CoinsAdapter.CoinsAdapterListener {
                  }
              }
          })
+
+
      }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -168,5 +167,9 @@ class MainActivity : AppCompatActivity(), CoinsAdapter.CoinsAdapterListener {
             view.systemUiVisibility = flags
             window.statusBarColor = Color.WHITE
         }
+    }
+
+    override fun onContactSelected(coin: Coin?) {
+        Toast.makeText(applicationContext, "Selected: " + coin!!.getName(), Toast.LENGTH_LONG).show()
     }
 }

@@ -10,6 +10,8 @@ import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,10 +26,10 @@ public class CoinsAdapter extends RecyclerView.Adapter<CoinsAdapter.MyViewHolder
     private CoinsAdapterListener listener;
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
-        public TextView name, percentage;
-        public ImageView thumbnail;
+        private TextView name, percentage;
+        private ImageView thumbnail;
 
-        public MyViewHolder(View view) {
+        private MyViewHolder(View view) {
             super(view);
             name = view.findViewById(R.id.name);
             percentage = view.findViewById(R.id.percentage);
@@ -62,7 +64,10 @@ public class CoinsAdapter extends RecyclerView.Adapter<CoinsAdapter.MyViewHolder
     public void onBindViewHolder(MyViewHolder holder, final int position) {
         final Coin coin = coinListFiltered.get(position);
         holder.name.setText(coin.getName());
-        holder.percentage.setText(Float.toString(coin.getPercent_change_1h()));
+        holder.percentage.setText(Float.toString(coin.getPrice_usd()));
+        Glide.with(context)
+                .load("https://www.cryptocompare.com/" + AppController.getImageURL(coin.getSymbol()))
+                .into(holder.thumbnail);
     }
 
     @Override

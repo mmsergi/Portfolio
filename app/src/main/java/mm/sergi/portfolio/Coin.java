@@ -146,7 +146,7 @@ public class Coin {
         this.last_updated = last_updated;
     }
 
-    public float getPrice_div() {
+    public float getPrice_curr() {
         return price_div;
     }
 
@@ -154,7 +154,7 @@ public class Coin {
         this.price_div = price_div;
     }
 
-    public float getVolume_div_24h() {
+    public float getVolume_curr_24h() {
         return volume_div_24h;
     }
 
@@ -162,7 +162,7 @@ public class Coin {
         this.volume_div_24h = volume_div_24h;
     }
 
-    public float getMarket_cap_div() {
+    public float getMarket_cap_curr() {
         return market_cap_div;
     }
 
